@@ -11,8 +11,11 @@ ESPDuino fun project: 8 relay kapcsolgatása telefonról
 ### EspDuino oldal:
 - WifiManager
 - HttpServer, ami képes a requestekre reagálni valamint adatokat visszaszolgáltatni az állapotról
+- 
 
 ### Mobil oldal
 - Mobil appot kell csinálni
 - Ami képes valahogy megtalálni a microcontroller ip címét
 - 8 toggle button a relékhez.
+- localstorageben eltárolom a microcontroller ip címét.
+- authentikációra nincs szükség
