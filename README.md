@@ -11,7 +11,8 @@ ESPDuino fun project: 8 relay kapcsolgatása telefonról
 ### EspDuino oldal:
 - WifiManager
 - HttpServer, ami képes a requestekre reagálni valamint adatokat visszaszolgáltatni az állapotról
-- 
+- El kell tudni menteni az időzítésekkel kapcsolatos dolgokat
+- Vissza kell tudni tölteni az időzítéssel kapcsolatos dolgokat
 
 ### Mobil oldal
 - Mobil appot kell csinálni
