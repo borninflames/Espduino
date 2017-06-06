@@ -18,7 +18,10 @@
 #define RELAY7  14
 #define RELAY8  15
 
-int relays[8] = {RELAY1, RELAY2, RELAY3, RELAY4, RELAY5, RELAY6, RELAY7, RELAY8};
+#define RELAY_COUNT 8
+
+
+int relays[RELAY_COUNT] = {RELAY1, RELAY2, RELAY3, RELAY4, RELAY5, RELAY6, RELAY7, RELAY8};
 
 // Create an instance of the server
 // specify the port to listen on as an argument
@@ -74,7 +77,7 @@ void setup() {
   server.begin();
 
   //setup relays, all of them are connected via output pin and they are off
-  for (int i = 0; i < 8; i++)
+  for (int i = 0; i < RELAY_COUNT; i++)
   {
     pinMode(relays[i], OUTPUT);
     digitalWrite(relays[i], HIGH);
@@ -103,7 +106,7 @@ void loop() {
   int val;
   int i;
   bool found = false;
-  for (i = 0; i < 8 && !found; i++)
+  for (i = 0; i < RELAY_COUNT && !found; i++)
   {
     String request = "/gpio/";
     request += i;    
@@ -115,36 +118,84 @@ void loop() {
       found = true;
     }
   }  
-  
+
   client.flush();
 
-  // Send the response to the client
-  client.print(createResponseMessage(i, val));
+  if (found)
+  {
+    // Send the response to the client
+    client.print(createRelayStatusResponseMessage(i-1));
+  }
+  else
+  {
+    String request = "/gpio";
+    if (req.indexOf(request) != -1)
+    {
+      // Send the response to the client
+      client.print(createStatusResponseMessage());
+    }
+  }
+  
   delay(1);
   Serial.println("Client disonnected"); 
 }
 
-String createResponseMessage(int i, int val)
+//returns with the relays status
+String createRelayStatusResponseMessage(int i)
 {
-    // Prepare the response
-  //{
-  //  id: 0,
-  //  status: true/false,
-  //}
-  String response = "HTTP/1.1 200 OK\r\n";
-  response += "Content-Type: application/json\r\n\r\n";
-  response += "{\r\n";
-  response += " id: ";
-  response += (i-1);
-  response += ",\r\n";
-  response += " status: ";
-  response += (val) ? "false" : "true";
-  response += ",\r\n";
-  response += "}\r\n";
+  // Prepare the response
+
+  String response = getHeader();
+  response += getRelayStatusJson(i);
 
   return response;
 }
 
+//returns with the relays statuses
+String createStatusResponseMessage()
+{
+  String response = getHeader();
+  response += "[\r\n";
+  for(int i = 0; i < RELAY_COUNT; i ++)
+  {
+    response += getRelayStatusJson(i);
+    if (i < RELAY_COUNT - 1)
+    {
+      response += ",\r\n";
+    }
+  } 
+  response += "]\r\n";
+
+  return response;  
+}
+
+//gets the HTTP header
+String getHeader()
+{
+  String response = "HTTP/1.1 200 OK\r\n";
+  response += "Content-Type: application/json\r\n\r\n";
+  return response;
+}
+
+//gets the status of the relay in JSON fromat
+String getRelayStatusJson(int i)
+{
+  //{
+  //  id: 0,
+  //  status: true/false,
+  //}
+  String response = "{\r\n";
+  response += " id: ";
+  response += i;
+  response += ",\r\n";
+  response += " status: ";
+  response += digitalRead(relays[i]) ? "false" : "true";
+  response += "\r\n}\r\n";
+
+  return response;
+}
+
+//toggles the pin
 int togglePin(int pin)
 {
   int pinVal = digitalRead(pin);
@@ -152,6 +203,7 @@ int togglePin(int pin)
   if (pinVal == HIGH) return LOW;
 }
 
+//makes the built in led to blink
 void tick()
 {
   //toggle state
