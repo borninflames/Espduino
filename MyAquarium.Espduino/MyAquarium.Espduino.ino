@@ -7,8 +7,6 @@
 
 //for LED status
 #include <Ticker.h>
-Ticker ticker;
-
 
 #define RELAY1  0
 #define RELAY2  2
@@ -26,13 +24,7 @@ int relays[8] = {RELAY1, RELAY2, RELAY3, RELAY4, RELAY5, RELAY6, RELAY7, RELAY8}
 // specify the port to listen on as an argument
 WiFiServer server(80);
 
-void tick()
-{
-  //toggle state
-  int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
-  digitalWrite(BUILTIN_LED, !state);     // set pin to the opposite state
-}
-
+Ticker ticker;
 
 //gets called when WiFiManager enters configuration mode
 void configModeCallback (WiFiManager *myWiFiManager) {
@@ -81,18 +73,12 @@ void setup() {
 
   server.begin();
 
+  //setup relays, all of them are connected via output pin and they are off
   for (int i = 0; i < 8; i++)
   {
     pinMode(relays[i], OUTPUT);
     digitalWrite(relays[i], HIGH);
   }
-}
-
-int togglePin(int pin)
-{
-  int pinVal = digitalRead(pin);
-  if (pinVal == LOW) return HIGH;
-  if (pinVal == HIGH) return LOW;
 }
 
 void loop() {
@@ -113,7 +99,7 @@ void loop() {
   Serial.println(req);
   client.flush();
   
-  // Match the request
+  // Match the request with the corresponding relay
   int val;
   int i;
   bool found = false;
@@ -132,15 +118,43 @@ void loop() {
   
   client.flush();
 
-  // Prepare the response
-  String s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\nGPIO";
-  s += (i-1);
-  s += " is now ";
-  s += (val)?"high":"low";
-  s += "</html>\n";
-
   // Send the response to the client
-  client.print(s);
+  client.print(createResponseMessage(i, val));
   delay(1);
   Serial.println("Client disonnected"); 
+}
+
+String createResponseMessage(int i, int val)
+{
+    // Prepare the response
+  //{
+  //  id: 0,
+  //  status: true/false,
+  //}
+  String response = "HTTP/1.1 200 OK\r\n";
+  response += "Content-Type: application/json\r\n\r\n";
+  response += "{\r\n";
+  response += " id: ";
+  response += (i-1);
+  response += ",\r\n";
+  response += " status: ";
+  response += (val) ? "false" : "true";
+  response += ",\r\n";
+  response += "}\r\n";
+
+  return response;
+}
+
+int togglePin(int pin)
+{
+  int pinVal = digitalRead(pin);
+  if (pinVal == LOW) return HIGH;
+  if (pinVal == HIGH) return LOW;
+}
+
+void tick()
+{
+  //toggle state
+  int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
+  digitalWrite(BUILTIN_LED, !state);     // set pin to the opposite state
 }
